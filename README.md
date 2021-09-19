@@ -16,11 +16,11 @@ Or run the *install_python_modules.sh* if the application is to be run on Unix b
 
 **test jak to wygląda w markdownie**
 
-#Usage
+# Usage
 After running the project using Python3-friendly IDE or from the terminal,
 the application plots map of Europe with certain chunks of terrain that meets the project's guidelines using the matplotlib module.
 
-#Credits
+# Credits
 Writted by
 Mateusz-Witka Jeżewski
 Tomasz Walburg
