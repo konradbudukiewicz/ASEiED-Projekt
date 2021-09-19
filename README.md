@@ -4,7 +4,7 @@
 This application analyzes height differences in the Europe and plots them.
 
 # Installation
-In order to successfully run this project it's neccessary to have Java SE Development Kit 8 (jdk.8) and Python=>3.7 installed on the machine,
+In order to successfully run this project it's necessary to have Java SE Development Kit 8 (jdk.8) and Python=>3.7 installed on the machine,
 also it's required to install all the python modules stored in requirements.txt,
 to do that change the working directory to the project's directory and run the command below from the shell:
 
