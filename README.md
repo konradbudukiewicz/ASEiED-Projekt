@@ -21,7 +21,10 @@ or
 ```
 sudo chmod a+rwx install_python_modules.sh
 ```
-
+then
+```
+./install_python_modules.sh
+```
 
 # Usage
 After running the project using Python3-friendly IDE or from the terminal,
