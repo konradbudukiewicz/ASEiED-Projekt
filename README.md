@@ -12,7 +12,15 @@ to do that change the working directory to the project's directory and run the c
 pip3 install -r requirements.txt
 ```
 
-Or run the *install_python_modules.sh* if the application is to be run on Unix base systems.
+Or run the *install_python_modules.sh* if the application is to be run on Unix base systems, remember to grant privileges to the *install_python_modules.sh*
+
+```
+sudo chmod 777 install_python_modules.sh
+```
+or
+```
+sudo chmod a+rwx install_python_modules.sh
+```
 
 
 # Usage
