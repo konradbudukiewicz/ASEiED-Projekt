@@ -50,11 +50,11 @@ def plot_results(df):
     #plt.savefig('map.pdf')
 
     img_data = io.BytesIO()
-    plt.savefig(img_data, format='png', bbox_inches='tight')
+    plt.savefig(img_data, format='pdf', bbox_inches='tight')
     img_data.seek(0)
 
     s3 = s3fs.S3FileSystem(anon=False)  # Uses default credentials
-    with s3.open('s3://bucketpath/map.png', 'wb') as f:
+    with s3.open('s3://examplexesttest/map.pdf', 'wb') as f:
         f.write(img_data.getbuffer())
 
 
@@ -137,7 +137,7 @@ conf.set('spark.jars.packages', 'org.apache.hadoop:hadoop-aws:3.2.1')
 sc = SparkContext(conf=conf)
 
 # zmienić klusze na swoje i aktualne
-sc._jsc.hadoopConfiguration().set("fs.s3a.access.key", "ASIA3WAKSRNCVG5FW6OH")
+sc._jsc.hadoopConfiguration().set("fs.s3.access.key", "ASIA3WAKSRNCVG5FW6OH")
 sc._jsc.hadoopConfiguration().set("fsa.s3.secret.key",
                                   "8tC5KO1iLRFTLbo5yruHJC+9frdK0lq1pMlX88sH")
 spark = SparkSession.builder.appName("TerrainTiles").getOrCreate()
