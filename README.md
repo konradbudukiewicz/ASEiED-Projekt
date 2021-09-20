@@ -1,37 +1,25 @@
 ## ASEiED Project No.3
 
 # Description
-This application analyzes height differences in the Europe and plots them.
+This AWS application analyzes height differences in the regions of Europe using data from https://registry.opendata.aws/terrain-tiles/ and plots them.
 
 # Installation
-In order to successfully run this project it's necessary to have Java SE Development Kit 8 (jdk.8) and Python=>3.7 installed on the machine,
-also it's required to install all the python modules stored in requirements.txt,
-to do that change the working directory to the project's directory and run the command below from the shell:
-
+Change the *fs.s3.access.key* and the *fsa.s3.secret.key* to your S3 bucket keys in *main.py*, lines 141, 144.
+Log into AWS, create a S3 bucket upload *main.py* and *install_python_modules.sh*,
+then create a cluster using ERM, preferred version is 6.4.0, add a bootstrap action that runs the *install_python_modules.sh*.
+SSH into the cluster and download the *main.py* from S3 bucket.
+Run the application using:
 ```
-pip3 install -r requirements.txt
-```
-
-Or run the *install_python_modules.sh* if the application is to be run on Unix base systems, remember to grant privileges to the *install_python_modules.sh*
-
-```
-sudo chmod 777 install_python_modules.sh
-```
-or
-```
-sudo chmod a+rwx install_python_modules.sh
-```
-then
-```
-./install_python_modules.sh
+spark-submit main.py
 ```
 
 # Usage
-After running the project using Python3-friendly IDE or from the terminal,
-the application plots map of Europe with certain chunks of terrain that meets the project's guidelines using the matplotlib module.
+After a successful run, a map is generated on the S3 bucket, the map contains plotted terrain chunks of the highest parts of Europe.
+Sample map below.
+![Alt text](map.png?raw=true "Map")
 
 # Credits
-Written by:
+Created by:
 Mateusz-Witka Jeżewski,
 Tomasz Walburg,
 Maciej Baniukiewicz
