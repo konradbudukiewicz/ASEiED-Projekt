@@ -132,32 +132,35 @@ def group_by_altitude(rdd_altitude_change):
         return 0
 
 
-conf = SparkConf()
-conf.set('spark.jars.packages', 'org.apache.hadoop:hadoop-aws:3.2.1')
-sc = SparkContext(conf=conf)
+if __name__ == "__main__":
+    conf = SparkConf()
+    conf.set('spark.jars.packages', 'org.apache.hadoop:hadoop-aws:3.2.1')
+    sc = SparkContext(conf=conf)
 
-# zmienić klusze na swoje i aktualne
-sc._jsc.hadoopConfiguration().set("fs.s3.access.key", "ASIA3WAKSRNCVG5FW6OH")
-sc._jsc.hadoopConfiguration().set("fsa.s3.secret.key",
-                                  "8tC5KO1iLRFTLbo5yruHJC+9frdK0lq1pMlX88sH")
-spark = SparkSession.builder.appName("TerrainTiles").getOrCreate()
+    # zmienić klusze na swoje i aktualne
+    sc._jsc.hadoopConfiguration().set("fs.s3.access.key",
+                                      "ASIA3WAKSRNCVG5FW6OH")
+    sc._jsc.hadoopConfiguration().set(
+        "fsa.s3.secret.key", "8tC5KO1iLRFTLbo5yruHJC+9frdK0lq1pMlX88sH")
+    spark = SparkSession.builder.appName("TerrainTiles").getOrCreate()
 
-paths = get_paths()
-rdd = sc.binaryFiles(paths)
-rdd_bin = rdd.map(lambda x: bytes(x[1]))
-rdd_bounds = rdd_bin.map(lambda x: get_bounds(x))
-rdd_altitude_change = rdd_bin.map(lambda x: img_get_altitude_change(x))
+    paths = get_paths()
+    rdd = sc.binaryFiles(paths)
+    rdd_bin = rdd.map(lambda x: bytes(x[1]))
+    rdd_bounds = rdd_bin.map(lambda x: get_bounds(x))
+    rdd_altitude_change = rdd_bin.map(lambda x: img_get_altitude_change(x))
 
-# zamiana rozmiaru rdd- tak, aby każdemu kwadratowi odpowiadała jedna wartość zmiany wysokości
-rdd_altitude_change = rdd_altitude_change.flatMap(lambda xs: [x for x in xs])
-rdd_bounds = rdd_bounds.flatMap(lambda xs: [x for x in xs])
-rdd_group = rdd_altitude_change.map(group_by_altitude)
-# łącznie rdd
-rdd_zipped = rdd_bounds.zip(rdd_group)
-# tworzenie df z rdd
-data_column_names = ["bounds", "group"]
-df = rdd_zipped.toDF(data_column_names)
-df.show()
+    # zamiana rozmiaru rdd- tak, aby każdemu kwadratowi odpowiadała jedna wartość zmiany wysokości
+    rdd_altitude_change = rdd_altitude_change.flatMap(
+        lambda xs: [x for x in xs])
+    rdd_bounds = rdd_bounds.flatMap(lambda xs: [x for x in xs])
+    rdd_group = rdd_altitude_change.map(group_by_altitude)
+    # łącznie rdd
+    rdd_zipped = rdd_bounds.zip(rdd_group)
+    # tworzenie df z rdd
+    data_column_names = ["bounds", "group"]
+    df = rdd_zipped.toDF(data_column_names)
+    df.show()
 
-# zapisywanie obrazka z mapą
-plot_results(df)
+    # zapisywanie obrazka z mapą
+    plot_results(df)
