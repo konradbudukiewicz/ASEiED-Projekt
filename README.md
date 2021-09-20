@@ -31,7 +31,7 @@ After running the project using Python3-friendly IDE or from the terminal,
 the application plots map of Europe with certain chunks of terrain that meets the project's guidelines using the matplotlib module.
 
 # Credits
-Writted by:
+Written by:
 Mateusz-Witka Jeżewski,
 Tomasz Walburg,
 Maciej Baniukiewicz
