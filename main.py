@@ -1,5 +1,4 @@
-from rasterio.plot import show
-from rasterio.io import MemoryFile
+import rasterio
 import numpy as np
 from pyspark.sql import SparkSession
 from pyspark import SparkContext
@@ -59,61 +58,56 @@ def plot_results(df):
 
 
 def get_paths():
-    # generowanie ścieżek do pobrania plików
-    paths = ""
+    paths = []
     zoom = 7
     for x in range(58, 78):
         for y in range(28, 53):
-            paths = paths + f"s3://elevation-tiles-prod/geotiff/{zoom}/{x}/{y}.tif,"
-    # usunięcie ostatniego przecinka
-    paths = paths[:-1]
+            paths.append(
+                f"s3://elevation-tiles-prod/geotiff/{zoom}/{x}/{y}.tif")
     return paths
 
 
-def img_get_altitude_change(byte):
-    # obliczanie zmiany wysokości
-    k_indexes = 10  # ilość punktów, które mają być brana pod uwagę, przy obliczaniu wyskości
-    with MemoryFile(byte) as memory_file:
-        with memory_file.open() as data:
-            data_array = data.read()
-            # zamiana rozmiaru tablicy
-            data_array = np.squeeze(data_array)
-            alt_data = []
-            scale = 32
-            # odczytywanie danych o wysokości z kolejnych części tablicy
-            # zmiana wyskości obliczana jest na podstawie różnicy ze średniej wysokości k największych i k najmniejszych wartości
-            for x in range(scale):
-                for y in range(scale - 1, -1, -1):
-                    small_data_arrray = data_array[y * 16:(y + 1) * 16,
-                                                   x * 16:(x + 1) * 16]
-                    small_data_arrray = small_data_arrray.flatten()
-                    small_data_arrray = np.sort(small_data_arrray)
-                    n_lowest = small_data_arrray[:k_indexes]
-                    n_highest = small_data_arrray[-k_indexes:]
-                    lowest_avg = np.average(n_lowest)
-                    highest_avg = np.average(n_highest)
-                    alt_data.append(
-                        float(np.abs((highest_avg - lowest_avg)) / 2))
-            return alt_data
+def img_get_bounds(path):
+    # krawędzie obszaru (dwa punkty) zapisywane do tablicy
+    with rasterio.open(path) as data:
+        bounds = []
+        scale = 32  # ile kortnie ma być więcej kwadratów jednej osi
+        edge_length = np.abs(data.bounds[0] - data.bounds[2]) / scale
+        # obliczanie granic kwadratów (2 punkty- w lewym dolnym i prawym górnym rogu)
+        for x in range(scale):
+            for y in range(scale):
+                bounds.append([
+                    float(data.bounds[0] + x * edge_length),
+                    float(data.bounds[1] + y * edge_length),
+                    float(data.bounds[0] + (x + 1) * edge_length),
+                    float(data.bounds[1] + (y + 1) * edge_length)
+                ])
+        return bounds
 
 
-def get_bounds(byte):
-    # obszar z danego kwadratu, dzielony jest na mniejsze obaszary
-    with MemoryFile(byte) as memory_file:
-        with memory_file.open() as data:
-            bounds = []
-            scale = 32  # ile kortnie ma być więcej kwadratów jednej osi
-            edge_length = np.abs(data.bounds[0] - data.bounds[2]) / scale
-            # obliczanie granic kwadratów (2 punkty- w lewym dolnym i prawym górnym rogu)
-            for x in range(scale):
-                for y in range(scale):
-                    bounds.append([
-                        float(data.bounds[0] + x * edge_length),
-                        float(data.bounds[1] + y * edge_length),
-                        float(data.bounds[0] + (x + 1) * edge_length),
-                        float(data.bounds[1] + (y + 1) * edge_length)
-                    ])
-            return bounds
+def img_get_altitude_change(path):
+    # wyznaczanie wzrostu wysokości na podstawie 10 najniższych i najwyższych punktów
+    k_indexes = 10
+    with rasterio.open(path) as data:
+        data_array = data.read()
+        # zamiana rozmiaru tablicy
+        data_array = np.squeeze(data_array)
+        alt_data = []
+        scale = 32
+        # odczytywanie danych o wysokości z kolejnych części tablicy
+        # zmiana wyskości obliczana jest na podstawie różnicy ze średniej wysokości k największych i k najmniejszych wartości
+        for x in range(scale):
+            for y in range(scale - 1, -1, -1):
+                small_data_arrray = data_array[y * 16:(y + 1) * 16,
+                                               x * 16:(x + 1) * 16]
+                small_data_arrray = small_data_arrray.flatten()
+                small_data_arrray = np.sort(small_data_arrray)
+                n_lowest = small_data_arrray[:k_indexes]
+                n_highest = small_data_arrray[-k_indexes:]
+                lowest_avg = np.average(n_lowest)
+                highest_avg = np.average(n_highest)
+                alt_data.append(float(np.abs((highest_avg - lowest_avg)) / 2))
+        return alt_data
 
 
 def group_by_altitude(rdd_altitude_change):
@@ -133,34 +127,32 @@ def group_by_altitude(rdd_altitude_change):
 
 
 if __name__ == "__main__":
+
     conf = SparkConf()
     conf.set('spark.jars.packages', 'org.apache.hadoop:hadoop-aws:3.2.1')
     sc = SparkContext(conf=conf)
 
     # zmienić klusze na swoje i aktualne
-    sc._jsc.hadoopConfiguration().set("fs.s3.access.key",
+    sc._jsc.hadoopConfiguration().set("fs.s3a.access.key",
                                       "ASIA3WAKSRNCVG5FW6OH")
     sc._jsc.hadoopConfiguration().set(
-        "fsa.s3.secret.key", "8tC5KO1iLRFTLbo5yruHJC+9frdK0lq1pMlX88sH")
-    spark = SparkSession.builder.appName("TerrainTiles").getOrCreate()
+        "fs.s3a.secret.key", "8tC5KO1iLRFTLbo5yruHJC+9frdK0lq1pMlX88sH")
 
+    spark = SparkSession.builder.appName("project").getOrCreate()
     paths = get_paths()
-    rdd = sc.binaryFiles(paths)
-    rdd_bin = rdd.map(lambda x: bytes(x[1]))
-    rdd_bounds = rdd_bin.map(lambda x: get_bounds(x))
-    rdd_altitude_change = rdd_bin.map(lambda x: img_get_altitude_change(x))
-
+    f = sc.parallelize(paths)
+    rdd_bounds = f.map(img_get_bounds)
+    rdd_altitude_change = f.map(img_get_altitude_change)
     # zamiana rozmiaru rdd- tak, aby każdemu kwadratowi odpowiadała jedna wartość zmiany wysokości
     rdd_altitude_change = rdd_altitude_change.flatMap(
         lambda xs: [x for x in xs])
     rdd_bounds = rdd_bounds.flatMap(lambda xs: [x for x in xs])
+    # przypisanie rdd do grupy
     rdd_group = rdd_altitude_change.map(group_by_altitude)
     # łącznie rdd
     rdd_zipped = rdd_bounds.zip(rdd_group)
-    # tworzenie df z rdd
     data_column_names = ["bounds", "group"]
     df = rdd_zipped.toDF(data_column_names)
     df.show()
 
-    # zapisywanie obrazka z mapą
     plot_results(df)
