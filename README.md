@@ -4,11 +4,11 @@
 This AWS application analyzes height differences in the regions of Europe using data from https://registry.opendata.aws/terrain-tiles/ and plots them.
 
 # Installation
-Log into AWS, create a S3 bucket.  
+Log into AWS, create an S3 bucket.  
 Change the *fs.s3.access.key* and the *fsa.s3.secret.key* to your S3 bucket keys in *main.py*, lines 141, 144.  
 Upload *main.py* and *install_python_modules.sh* to your S3 bucket.  
 Create a cluster using ERM, preferred version is 6.4.0, add a bootstrap action that runs the *install_python_modules.sh*.  
-SSH into the cluster and download the *main.py* from S3 bucket.  
+SSH into the cluster and download the *main.py* from the S3 bucket.  
 Run the application using:
 ```
 spark-submit main.py
