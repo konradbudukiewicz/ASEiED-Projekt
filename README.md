@@ -9,6 +9,11 @@ Change the *fs.s3.access.key* and the *fsa.s3.secret.key* to your S3 bucket keys
 Upload *main.py* and *install_python_modules.sh* to your S3 bucket.  
 Create a cluster using ERM, preferred version is 6.4.0, add a bootstrap action that runs the *install_python_modules.sh*.  
 SSH into the cluster and download the *main.py* from the S3 bucket.  
+Install all the required modules using:  
+```
+pip3 install -r requirements.txt
+```
+
 Run the application using:
 ```
 spark-submit main.py
