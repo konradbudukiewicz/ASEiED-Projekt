@@ -21,7 +21,7 @@ Sample map below.
 
 # Credits
 Created by:  
-Mateusz-Witka Jeżewski  
+Mateusz Witka-Jeżewski  
 Tomasz Walburg  
 Maciej Baniukiewicz
 
